@@ -1,0 +1,18 @@
+# General configuration for the GoAudioEQ plugin
+
+# Default settings loaded on startup if no saved state exists
+defaults:
+  preset: "Default" # Name of the preset to load from presets.json
+  # Add other default configurations if needed, e.g., GUI theme
+
+# GUI related settings
+gui:
+  theme: "dark" # Example: light or dark theme for Fyne
+  plotUpdateRateHz: 30 # How often to update the frequency response plot
+
+# Analyzer settings
+analyzer:
+  fftSize: 2048 # FFT size for frequency analysis
+  minFrequency: 20.0
+  maxFrequency: 20000.0
+

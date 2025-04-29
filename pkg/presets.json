@@ -1,0 +1,20 @@
+{
+  "Default": {
+    "masterGain": 0.5, 
+    "bands": [
+      { "type": "LowShelf", "freq": 200, "q": 0.71, "gainDB": 0.0, "enabled": true }
+    ]
+  },
+  "Bass Boost": {
+    "masterGain": 0.5,
+    "bands": [
+       { "type": "LowShelf", "freq": 150, "q": 0.71, "gainDB": 6.0, "enabled": true }
+    ]
+  },
+  "Treble Cut": {
+     "masterGain": 0.5,
+     "bands": [
+       { "type": "HighShelf", "freq": 5000, "q": 0.71, "gainDB": -6.0, "enabled": true }
+    ]
+  }
+}
