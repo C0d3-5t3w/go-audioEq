@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/C0d3-5t3w/go-audioEq/internal/filters"
-	"pipelined.dev/audio/vst2"
 )
 
 // Processor handles the core audio processing logic
@@ -67,74 +66,56 @@ func (p *Processor) GetFilters() []filters.Filter {
 	return p.filters
 }
 
-// Process applies the EQ filters to the input buffer (float32)
-func (p *Processor) Process(io *vst2.IO) { // Changed signature to accept *vst2.IO
-	numSamples := io.NumSamples()
-	numChannels := io.NumChannels()
-	// vst2.IO handles input/output buffers internally, no need for separate output arg check here
-
-	// Get channel slices
-	inChans := io.InputFloat32()   // Get input buffers
-	outChans := io.OutputFloat32() // Get output buffers
-
-	if len(outChans) != numChannels || len(inChans) != numChannels {
-		log.Printf("Error: Channel count mismatch in IO buffer (In %d, Out %d, Expected %d)",
-			len(inChans), len(outChans), numChannels)
-		io.Clear() // Clear output if mismatch
+// ProcessFloat32Samples processes float32 audio samples directly
+func (p *Processor) ProcessFloat32Samples(in [][]float32, out [][]float32, numSamples, numChannels int) {
+	if len(out) < numChannels || len(in) < numChannels {
+		log.Printf("Error: Channel count mismatch in buffer arrays (In %d, Out %d, Expected %d)",
+			len(in), len(out), numChannels)
 		return
 	}
 
 	for ch := 0; ch < numChannels; ch++ {
-		in := inChans[ch]
-		out := outChans[ch]
-		if len(in) != numSamples || len(out) != numSamples {
-			log.Printf("Error: Sample count mismatch in IO buffer channel %d (In %d, Out %d, Expected %d)",
-				ch, len(in), len(out), numSamples)
-			// Optionally clear just this channel or the whole buffer
-			io.Clear()
-			return // Stop processing on error
+		inCh := in[ch]
+		outCh := out[ch]
+		if len(inCh) < numSamples || len(outCh) < numSamples {
+			log.Printf("Error: Sample count mismatch in buffer channel %d (In %d, Out %d, Expected %d)",
+				ch, len(inCh), len(outCh), numSamples)
+			return
 		}
+
 		for i := 0; i < numSamples; i++ {
-			sample := float64(in[i])
+			sample := float64(inCh[i])
 			for _, f := range p.filters {
 				sample = f.Process(sample, ch) // Process channel 'ch'
 			}
-			out[i] = float32(sample * p.masterGain)
+			outCh[i] = float32(sample * p.masterGain)
 		}
 	}
 }
 
-// ProcessFloat64 applies the EQ filters to the input buffer (float64)
-func (p *Processor) ProcessFloat64(io *vst2.IO) { // Changed signature to accept *vst2.IO
-	numSamples := io.NumSamples()
-	numChannels := io.NumChannels()
-
-	// Get channel slices
-	inChans := io.InputFloat64()   // Get input buffers
-	outChans := io.OutputFloat64() // Get output buffers
-
-	if len(outChans) != numChannels || len(inChans) != numChannels {
-		log.Printf("Error: Channel count mismatch in IO buffer (In %d, Out %d, Expected %d)",
-			len(inChans), len(outChans), numChannels)
-		io.Clear()
+// ProcessFloat64Samples processes float64 audio samples directly
+func (p *Processor) ProcessFloat64Samples(in [][]float64, out [][]float64, numSamples, numChannels int) {
+	if len(out) < numChannels || len(in) < numChannels {
+		log.Printf("Error: Channel count mismatch in buffer arrays (In %d, Out %d, Expected %d)",
+			len(in), len(out), numChannels)
 		return
 	}
 
 	for ch := 0; ch < numChannels; ch++ {
-		in := inChans[ch]
-		out := outChans[ch]
-		if len(in) != numSamples || len(out) != numSamples {
-			log.Printf("Error: Sample count mismatch in IO buffer channel %d (In %d, Out %d, Expected %d)",
-				ch, len(in), len(out), numSamples)
-			io.Clear()
+		inCh := in[ch]
+		outCh := out[ch]
+		if len(inCh) < numSamples || len(outCh) < numSamples {
+			log.Printf("Error: Sample count mismatch in buffer channel %d (In %d, Out %d, Expected %d)",
+				ch, len(inCh), len(outCh), numSamples)
 			return
 		}
+
 		for i := 0; i < numSamples; i++ {
-			sample := in[i] // Already float64
+			sample := inCh[i]
 			for _, f := range p.filters {
 				sample = f.Process(sample, ch) // Process channel 'ch'
 			}
-			out[i] = sample * p.masterGain
+			outCh[i] = sample * p.masterGain
 		}
 	}
 }

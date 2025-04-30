@@ -70,6 +70,8 @@ type GUI struct {
 	plotTicker   *time.Ticker
 	plotMutex    sync.RWMutex // To protect plot data access
 
+	isVisible bool // Add a manual visibility state
+
 	// Add other controls: band selectors, freq/q/gain sliders/knobs, plot area
 }
 
@@ -104,7 +106,7 @@ func NewGUI(paramCb ParameterCallback, filterProvider FilterProvider) *GUI {
 	return g
 }
 
-// Open creates and shows the GUI window
+// Open creates and shows the GUI window.
 func (g *GUI) Open(hwnd unsafe.Pointer) {
 	// Check if window already exists
 	if g.window != nil {
@@ -243,6 +245,7 @@ func (g *GUI) Open(hwnd unsafe.Pointer) {
 	// Handle window closing - just hide it, don't exit the app
 	g.window.SetCloseIntercept(func() {
 		g.stopPlotUpdates()
+		g.isVisible = false // Update visibility state
 		g.window.Hide()
 	})
 
@@ -304,7 +307,7 @@ func (g *GUI) startPlotUpdates() {
 	go func() {
 		for range g.plotTicker.C {
 			// Check if window exists and is visible before updating plot
-			if g.window != nil && g.window.Visible() { // Use Visible() method
+			if g.window != nil && g.isVisible { // Use Visible() method
 				g.updatePlot()
 			}
 		}
@@ -329,9 +332,8 @@ func (g *GUI) Close() {
 
 // UpdateParameter updates a GUI control based on changes from the host/plugin logic
 func (g *GUI) UpdateParameter(index int, value float32) {
-	// Check if window exists and is visible before updating controls
-	if g.window == nil || !g.window.Visible() { // Use Visible() method
-		return // GUI not open or visible
+	if !g.isVisible { // Use manual visibility state
+		return
 	}
 
 	// Update Master Gain
